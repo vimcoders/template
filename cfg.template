@@ -1,6 +1,6 @@
 package cfg
 
 type {{.Name}} struct {
-{{range $key, $value := .Fields}} {{$key}} {{$value}} 
+{{range $key, $value := .Header}} {{$key}} {{$value}} 
 {{end}}
 }

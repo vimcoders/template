@@ -1,20 +1,16 @@
-package gen
+package template
 
 import (
 	"encoding/csv"
+	"fmt"
 	"text/template"
 )
 
-type Template struct {
-	input interface{}
-	*template.Template
-}
-
-func NewTemplate(r *csv.Reader) (*Template, error) {
+func NewTemplate(src *csv.Reader) (*template.Template, interface{}, error) {
 	tmpl, err := template.ParseFiles("./cfg.template")
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	type Input struct {
@@ -23,20 +19,19 @@ func NewTemplate(r *csv.Reader) (*Template, error) {
 		Rows   [][]string
 	}
 
-	records, err := r.ReadAll()
+	records, err := src.ReadAll()
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	input := Input{"test", make(map[string]string), records[2:]}
+	fmt.Println(records)
+
+	input := Input{"NetRow", make(map[string]string), records[2:]}
 
 	for i, record := range records[0] {
 		input.Header[record] = records[1][i]
 	}
 
-	return &Template{
-		Template: tmpl,
-		input:    &input,
-	}, nil
+	return tmpl, &input, nil
 }
