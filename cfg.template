@@ -1,6 +1,53 @@
 package cfg
 
-type {{.Name}} struct {
-{{range $key, $value := .Header}} {{$key}} {{$value}} 
+type {{.Row}} struct {
+{{range $value := .Header}} {{$value}} 
 {{end}}
+}
+
+type {{.Rows}} struct {
+	[]rows {{.Row}}
+}
+
+func (r *{{.Rows}}) Exist(id int) {
+	for _, v := range r.rows {
+		if v.Id == id {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (r *{{.Rows}}) AddRow(row []string) error {
+	var row {{.Row}}
+
+	t := reflect.TypeOf(&row)
+	v := reflect.ValueOf(&row)
+
+	for i := 0; i < t.NumField(); i++ {
+		v.Field(i).Set(row[i])
+	}
+
+	return nil
+}
+
+func (r *{{.Rows}}) Row(id int) *{{.Row}} {
+	for i, v := range r.rows {
+		if v.Id == id {
+			return &r.rows[i]
+		}
+	}
+
+	return nil
+}
+
+func New{{.Rows}}({data [][]string) *{{.Rows}} {
+	var rows {{.Rows}}
+
+	for i, v := range data {
+		rows.AddRow(v)
+	}
+
+	return &rows
 }
