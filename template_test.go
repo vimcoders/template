@@ -2,8 +2,10 @@ package template
 
 import (
 	"encoding/csv"
+	"fmt"
 	"os"
 	"testing"
+	"text/template"
 )
 
 func TestNewTeamplate(t *testing.T) {
@@ -13,13 +15,24 @@ func TestNewTeamplate(t *testing.T) {
 		t.Log(err)
 	}
 
-	temp, input, err := NewTemplate(csv.NewReader(file))
+	d, err := csv.NewReader(file).ReadAll()
 
-	if err == nil {
+	if err != nil {
 		t.Log(err)
 	}
 
-	if err := temp.Execute(os.Stdout, input); err != nil {
+	tmp, err := template.ParseFiles("./cfg.template")
+
+	if err != nil {
+		t.Log(err)
+	}
+
+	rowName := fmt.Sprintf("%vRow", file.Name())
+	rowsName := fmt.Sprintf("%vRows", file.Name())
+
+	w := NewWriteTo(rowName, rowsName, tmp, d)
+
+	if _, err := w.WriteTo(os.Stdout); err != nil {
 		t.Log(err)
 	}
 }

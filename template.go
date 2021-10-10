@@ -1,36 +1,39 @@
 package template
 
 import (
-	"encoding/csv"
 	"fmt"
+	"io"
 	"text/template"
 )
 
-type Input struct {
-	Row    string
-	Rows   string
-	Header []string
-	Data   [][]string
+type WriteTo struct {
+	Data     [][]string
+	RowName  string
+	RowsName string
+	tmp      *template.Template
 }
 
-func NewTemplate(src *csv.Reader) (*template.Template, interface{}, error) {
-	tmpl, err := template.ParseFiles("./cfg.template")
-
-	if err != nil {
-		return nil, nil, err
+func (wt *WriteTo) WriteTo(w io.Writer) (n int64, err error) {
+	type Input struct {
+		Row    string
+		Rows   string
+		Header []string
+		Data   [][]string
 	}
 
-	records, err := src.ReadAll()
+	input := Input{Row: wt.RowName, Rows: wt.RowsName, Data: wt.Data}
 
-	if err != nil {
-		return nil, nil, err
+	for i, record := range wt.Data[0] {
+		input.Header = append(input.Header, fmt.Sprintf("%v %v", record, wt.Data[1][i]))
 	}
 
-	input := Input{Row: "NetRow", Rows: "NetRows", Data: records[2:]}
-
-	for i, record := range records[0] {
-		input.Header = append(input.Header, fmt.Sprintf("%v %v", record, records[1][i]))
+	if err := wt.tmp.Execute(w, input); err != nil {
+		return 0, err
 	}
 
-	return tmpl, &input, nil
+	return 0, nil
+}
+
+func NewWriteTo(rowName, rowsName string, t *template.Template, d [][]string) io.WriterTo {
+	return &WriteTo{RowName: rowName, RowsName: rowsName, tmp: t, Data: d}
 }
